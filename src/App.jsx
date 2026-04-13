@@ -1,121 +1,131 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import './App.css';
+import L from 'leaflet';
+
+// [중요] 마커 아이콘 이미지가 깨지는 문제를 해결하기 위해 외부 CDN 주소를 사용합니다.
+const markerIcon = new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [locations, setLocations] = useState([]);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [latestData, setLatestData] = useState(null);
+  const [historicalData, setHistoricalData] = useState([]);
+  const [viewMode, setViewMode] = useState('none');
+  const [loading, setLoading] = useState(false);
+
+  // 1. 위치 리스트 불러오기 + 디버깅 로그 추가
+  useEffect(() => {
+    console.log("데이터를 불러오는 중...");
+    fetch('https://fluxnet-server-c4g0fbamd6cdhzdf.koreacentral-01.azurewebsites.net/api/showcase/locations/')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP 에러! 상태코드: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log("불러온 위치 데이터:", data); // 개발자 도구(F12) 콘솔에서 확인 가능
+        setLocations(data);
+      })
+      .catch(err => {
+        console.error("API 호출 중 오류 발생:", err);
+        alert("데이터를 불러오지 못했습니다. 콘솔 창을 확인해주세요.");
+      });
+  }, []);
+
+  const handleMarkerClick = async (loc) => {
+    setSelectedLocation(loc);
+    setViewMode('latest');
+    setLoading(true);
+    try {
+      const res = await fetch(`https://fluxnet-server-c4g0fbamd6cdhzdf.koreacentral-01.azurewebsites.net/api/showcase/location/${loc.id}/data/latest/`);
+      const data = await res.json();
+      setLatestData(data);
+    } catch (err) {
+      console.error("최신 데이터 호출 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewHistory = async () => {
+    setViewMode('history');
+    setLoading(true);
+    try {
+      const res = await fetch(`https://fluxnet-server-c4g0fbamd6cdhzdf.koreacentral-01.azurewebsites.net/api/showcase/location/${selectedLocation.id}/data/`);
+      const data = await res.json();
+      setHistoricalData(data.results);
+    } catch (err) {
+      console.error("과거 데이터 호출 실패:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+    <div className="app-container">
+      <div className="map-section">
+        <MapContainer 
+          center={[36.5, 127.5]} // 대한민국 중심부로 초기 설정
+          zoom={7} 
+          style={{ height: '100%', width: '100%' }}
         >
-          Count is {count}
-        </button>
-      </section>
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; OpenStreetMap &copy; CARTO'
+          />
+          
+          {/* 마커 렌더링 부분 */}
+          {locations.map(loc => (
+            <Marker
+              key={loc.id}
+              position={[loc.latitude, loc.longitude]}
+              icon={markerIcon} // 수정한 아이콘 설정 적용
+              eventHandlers={{ click: () => handleMarkerClick(loc) }}
+            >
+              <Popup>{loc.name}</Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {viewMode !== 'none' && (
+        <div className="info-panel">
+          <button className="close-btn" onClick={() => setViewMode('none')}>✕</button>
+          <h2>{selectedLocation?.name}</h2>
+          {loading ? (
+            <div className="loading">로딩 중...</div>
+          ) : viewMode === 'latest' ? (
+            <div className="data-card">
+              <p><strong>날짜:</strong> {latestData?.date}</p>
+              <p><strong>예측:</strong> {latestData?.prediction}</p>
+              <p><strong>설명:</strong> {latestData?.description}</p>
+              <button onClick={handleViewHistory} className="primary-btn mt-15">이전 데이터 보기</button>
+            </div>
+          ) : (
+            <div className="history-list">
+              <button onClick={() => setViewMode('latest')} className="secondary-btn mb-15">뒤로가기</button>
+              <ul>
+                {historicalData.map(item => (
+                  <li key={item.id}>
+                    <strong>{item.date}</strong>: {item.prediction} ({item.description})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
