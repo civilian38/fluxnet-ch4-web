@@ -116,7 +116,11 @@ function App() {
               <ul>
                 {historicalData.map(item => (
                   <li key={item.id}>
-                    <strong>{item.date}</strong>: {item.prediction} ({item.description})
+                    <span className="history-date">[{item.date}]</span>
+                    <div className="history-details">
+                      예측값: {item.prediction} <br />
+                      <span className="desc">({item.description})</span>
+                    </div>
                   </li>
                 ))}
               </ul>
