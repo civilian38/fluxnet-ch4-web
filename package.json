@@ -16,11 +16,19 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@rolldown/plugin-babel": "^0.2.3",
+    "@types/leaflet": "^1.9.22",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "axios": "^1.20.0",
     "babel-plugin-react-compiler": "^1.0.0",
+    "install": "^0.13.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.38.0",
+    "npm": "^11.19.1",
     "oxlint": "^1.75.0",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^7.18.3",
     "vite": "^8.2.0"
   }
 }
