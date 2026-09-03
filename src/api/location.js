@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = 'https://fluxnet-web.delightfulisland-8239f9f6.koreacentral.azurecontainerapps.io/api';
+import apiClient from './apiClient';
 
 /**
  * 화면 영역(bbox) 기준으로 관리 지역들의 마커 데이터(GeoJSON) 조회
@@ -8,7 +6,7 @@ const API_BASE_URL = 'https://fluxnet-web.delightfulisland-8239f9f6.koreacentral
  */
 export const getLocations = async (bbox) => {
     const params = bbox ? { in_bbox: bbox } : {};
-    const response = await axios.get(`${API_BASE_URL}/prediction/locations/`, { params });
+    const response = await apiClient.get(`/prediction/locations/`, { params });
     return response.data;
 };
 
@@ -17,6 +15,6 @@ export const getLocations = async (bbox) => {
  * @param {number} id - 클릭한 지역 ID
  */
 export const getLocationDetails = async (id) => {
-    const response = await axios.get(`${API_BASE_URL}/prediction/locations/${id}/`);
+    const response = await apiClient.get(`/prediction/locations/${id}/`);
     return response.data;
 };

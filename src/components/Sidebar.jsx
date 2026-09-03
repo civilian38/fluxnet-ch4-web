@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, Plus, Search, MapPin } from 'lucide-react';
-
-// TODO: 전역 사용자 상태 관리(Context/Redux 등)가 필요하나, 현재는 명세에 따른 목업 상태 적용
-const dummyAuth = {
-    isLoggedIn: true,
-    isAdmin: true
-};
+import { AuthContext } from '../context/AuthContext';
 
 const Sidebar = () => {
     const [searchText, setSearchText] = useState('');
+    const { user, logout } = useContext(AuthContext);
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <aside style={{ 
@@ -25,14 +28,18 @@ const Sidebar = () => {
                 <h1 style={{ fontSize: '20px', margin: 0, color: '#2b5c46', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <MapPin size={24} color="#2b5c46" /> Fluxnet CH4
                 </h1>
-                {dummyAuth.isLoggedIn ? (
-                    <LogOut size={20} style={{ cursor: 'pointer', color: '#6b6375' }} title="로그아웃" />
-                ) : (
-                    <LogIn size={20} style={{ cursor: 'pointer', color: '#6b6375' }} title="로그인" />
-                )}
+                {user ? (
+                    <LogOut size={20} style={{ cursor: 'pointer', color: '#6b6375' }} title="로그아웃" onClick={handleLogout} />
+                ) : null}
             </div>
             
             <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {user && (
+                    <div style={{ marginBottom: '16px', fontSize: '14px', color: '#2b5c46', fontWeight: 'bold' }}>
+                        반갑습니다, {user.nickname} 님!
+                    </div>
+                )}
+                
                 <div style={{ position: 'relative', marginBottom: '20px' }}>
                     <Search size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: '#9ca3af' }} />
                     <input 
@@ -71,28 +78,30 @@ const Sidebar = () => {
                     </div>
                 </div>
 
-                {dummyAuth.isLoggedIn && dummyAuth.isAdmin && (
+                {!user ? (
                     <button style={{
-                        marginTop: '20px',
-                        padding: '14px',
-                        backgroundColor: '#2b5c46',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: '600',
-                        fontSize: '15px',
-                        transition: 'background-color 0.2s'
+                        marginTop: '20px', padding: '14px', backgroundColor: '#2b5c46', color: 'white',
+                        border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600',
+                        fontSize: '15px', transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => navigate('/login')}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1e4232'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2b5c46'}>
+                        <LogIn size={18} /> 로그인하러 가기
+                    </button>
+                ) : user.is_admin ? (
+                    <button style={{
+                        marginTop: '20px', padding: '14px', backgroundColor: '#2b5c46', color: 'white',
+                        border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600',
+                        fontSize: '15px', transition: 'background-color 0.2s'
                     }}
                     onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1e4232'}
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2b5c46'}>
                         <Plus size={18} /> 새로운 지역 추가
                     </button>
-                )}
+                ) : null}
             </div>
         </aside>
     );
