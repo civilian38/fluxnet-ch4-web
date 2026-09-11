@@ -1,10 +1,9 @@
-import React, { useState, useContext } from 'react';
+import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, LogOut, Plus, Search, MapPin } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
-const Sidebar = () => {
-    const [searchText, setSearchText] = useState('');
+const Sidebar = ({ searchText, setSearchText, locations, onRegionClick }) => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -63,19 +62,44 @@ const Sidebar = () => {
                 </div>
 
                 <div style={{ flexGrow: 1, overflowY: 'auto' }}>
-                    <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '12px', fontWeight: '500' }}>관리 중인 지역 (목업)</p>
-                    <div style={{ padding: '14px', border: '1px solid #e5e4e7', borderRadius: '8px', marginBottom: '10px', cursor: 'pointer', backgroundColor: '#f9f9f9', transition: 'background-color 0.2s' }}
-                         onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4f3ec'}
-                         onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}>
-                        <strong style={{ display: 'block', fontSize: '15px', color: '#08060d', marginBottom: '4px' }}>서울대공원 습지</strong>
-                        <span style={{ fontSize: '13px', color: '#6b6375' }}>최근 측정: 2.1 ppm (정상)</span>
-                    </div>
-                    <div style={{ padding: '14px', border: '1px solid #e5e4e7', borderRadius: '8px', marginBottom: '10px', cursor: 'pointer', backgroundColor: '#f9f9f9', transition: 'background-color 0.2s' }}
-                         onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4f3ec'}
-                         onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}>
-                        <strong style={{ display: 'block', fontSize: '15px', color: '#08060d', marginBottom: '4px' }}>창녕 우포늪</strong>
-                        <span style={{ fontSize: '13px', color: '#6b6375' }}>최근 측정: 3.4 ppm (경고)</span>
-                    </div>
+                    <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '12px', fontWeight: '500' }}>
+                        {searchText ? `"${searchText}" 검색 결과` : '현재 지도 영역의 지역'}
+                    </p>
+                    
+                    {locations && locations.length > 0 ? (
+                        locations.map((loc) => (
+                            <div 
+                                key={loc.id}
+                                onClick={() => onRegionClick({
+                                    id: loc.id,
+                                    lat: loc.geometry.coordinates[1],
+                                    lng: loc.geometry.coordinates[0]
+                                })}
+                                style={{ 
+                                    padding: '14px', 
+                                    border: '1px solid #e5e4e7', 
+                                    borderRadius: '8px', 
+                                    marginBottom: '10px', 
+                                    cursor: 'pointer', 
+                                    backgroundColor: '#f9f9f9', 
+                                    transition: 'background-color 0.2s' 
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f4f3ec'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                            >
+                                <strong style={{ display: 'block', fontSize: '15px', color: '#08060d', marginBottom: '4px' }}>
+                                    {loc.properties.name}
+                                </strong>
+                                <span style={{ fontSize: '12px', color: '#6b6375' }}>
+                                    위도 {loc.geometry.coordinates[1].toFixed(2)}, 경도 {loc.geometry.coordinates[0].toFixed(2)}
+                                </span>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '20px 0', color: '#9ca3af', fontSize: '14px' }}>
+                            해당하는 지역이 없습니다.
+                        </div>
+                    )}
                 </div>
 
                 {!user ? (

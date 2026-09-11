@@ -1,11 +1,18 @@
 import apiClient from './apiClient';
 
 /**
- * 화면 영역(bbox) 기준으로 관리 지역들의 마커 데이터(GeoJSON) 조회
- * @param {string} bbox - min_lon,min_lat,max_lon,max_lat 형식
+ * 화면 영역(bbox) 및 검색어(search) 기준으로 관리 지역들의 마커 데이터(GeoJSON) 조회
+ * @param {Object|string} paramsObj - string일 경우 bbox로 간주, object일 경우 {bbox, search}
  */
-export const getLocations = async (bbox) => {
-    const params = bbox ? { in_bbox: bbox } : {};
+export const getLocations = async (paramsObj) => {
+    let params = {};
+    if (typeof paramsObj === 'string') {
+        if (paramsObj) params.in_bbox = paramsObj;
+    } else if (paramsObj && typeof paramsObj === 'object') {
+        if (paramsObj.bbox) params.in_bbox = paramsObj.bbox;
+        if (paramsObj.search) params.search = paramsObj.search;
+    }
+
     const response = await apiClient.get(`/prediction/locations/`, { params });
     return response.data;
 };
