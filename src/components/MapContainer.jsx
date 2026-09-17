@@ -56,6 +56,7 @@ const MapContainerComponent = ({
     mapCenter 
 }) => {
     const cartoKey = import.meta.env.VITE_CARTO_KEY;
+
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             {loading && locations.length === 0 && (
