@@ -55,6 +55,7 @@ const MapContainerComponent = ({
     selectedRegionId, 
     mapCenter 
 }) => {
+    const cartoKey = import.meta.env.VITE_CARTO_KEY;
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             {loading && locations.length === 0 && (
@@ -73,8 +74,8 @@ const MapContainerComponent = ({
                 style={{ width: '100%', height: '100%', zIndex: 0 }}
             >
                 <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; OpenStreetMap contributors'
+                    url={`https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${cartoKey}`}
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 />
                 <MapInitializer onBoundsChange={onBoundsChange} />
                 <MapEventHandler onUserMove={onUserMove} onBoundsChange={onBoundsChange} />
